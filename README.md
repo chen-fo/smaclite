@@ -1,6 +1,14 @@
 # SMAClite - Starcraft Multi-Agent Challenge lite
 This is a repository for the SMAClite environment. It is a (nearly) pure Python reimplementation of the Starcraft Multi-Agent Challenge, using Numpy and OpenAI Gym.
 
+## Two-sided POSG interface
+
+Both teams can be controlled by external policies through `SMAClitePOSGEnv`.
+It provides per-unit local observations, action masks, an optional global state,
+and a pluggable reward function (zero rewards by default, no zero-sum assumption).
+Existing single-sided environments remain available.
+See [the POSG interface guide](docs/POSG.md) and [example_posg.py](example_posg.py).
+
 > [!CAUTION]
 > The SMAClite environment was updated to support the new [Gymnasium](https://gymnasium.farama.org/) interface in replacement of the deprecated `gym=0.25/0.26` dependency. For backwards compatibility, please see [Gymnasium compatibility documentation](https://gymnasium.farama.org/content/gym_compatibility/) or use version v1.0.0 of the repository.
 

@@ -172,6 +172,19 @@ class SMACliteEnv(gym.Env):
     def reset(self, seed=None, options=None) -> Tuple[np.ndarray, dict]:
         if seed is not None:
             self.seed(seed)
+        self._reset_world()
+        self.last_actions = np.zeros(self.n_actions * self.n_agents)
+        self.max_reward = (
+            self.n_enemies * REWARD_KILL
+            + REWARD_WIN
+            + sum(enemy.hp + enemy.shield for enemy in self.enemies.values())
+        )
+        self.__enemy_attack()
+        obs = self.get_obs()
+        return obs, self.__get_info()
+
+    def _reset_world(self):
+        """Place units and reset physics without assigning a policy or producing observations."""
         self.agents = {}
         self.enemies = {}
         self.all_units = {}
@@ -182,14 +195,6 @@ class SMACliteEnv(gym.Env):
         self.neighbour_finder_enemy.set_all_units(self.enemies)
         self.neighbour_finder_all.set_all_units(self.all_units)
         self.velocity_updater.reset_all_units(self.all_units)
-        self.max_reward = (
-            self.n_enemies * REWARD_KILL
-            + REWARD_WIN
-            + sum(enemy.hp + enemy.shield for enemy in self.enemies.values())
-        )
-        self.__enemy_attack()
-        obs = self.get_obs()
-        return obs, self.__get_info()
 
     def step(self, actions):
         assert len(actions) == self.n_agents
@@ -358,6 +363,14 @@ class SMACliteEnv(gym.Env):
             )
             for unit, targets in zip(nonpriority_attackmoving, attackmoving_targets):
                 unit.priority_targets = targets
+        return self._advance_world()
+
+    def _advance_world(self):
+        """Advance one physics tick after commands and target cleanup are prepared.
+
+        No policy chooses actions here. The return value is the legacy single-team
+        damage reward; two-sided callers use their own reward function.
+        """
         for unit in self.all_units.values():
             unit.prepare_velocity()
         self.velocity_updater.compute_new_velocities(self.all_units)

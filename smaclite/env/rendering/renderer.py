@@ -40,6 +40,15 @@ class Renderer:
         self.window = None
         self.clock = None
         self.fonts = {}
+        self._font_cache = {}
+
+    def _get_font(self, size):
+        # The bundled font avoids platform font discovery. Windows registry
+        # entries are not always paths, which can make pygame.font.SysFont fail.
+        size = max(1, int(size))
+        if size not in self._font_cache:
+            self._font_cache[size] = pygame.font.Font(None, size)
+        return self._font_cache[size]
 
     def render(self, map_info: MapInfo, units: List[Unit], return_rgb_array: bool = False):
         if not self.initialised:
@@ -88,20 +97,18 @@ class Renderer:
             main_font_size = int(radius * 0.9)
             if unit.type not in self.fonts:
                 text = UNIT_TYPE_ABBREVIATIONS.get(unit.type, "CST")
-                font = pygame.font.SysFont("Monospace", main_font_size) \
+                font = self._get_font(main_font_size) \
                     .render(text, True, (0, 0, 0))
                 self.fonts[unit.type] = font
             font = self.fonts[unit.type]
             hp_str = f"{unit.hp}"
             if unit.max_shield:
                 hp_str += f"+{unit.shield}"
-            hp_font = pygame.font.SysFont("Monospace",
-                                          int(radius) // 2) \
+            hp_font = self._get_font(int(radius) // 2) \
                 .render(hp_str, True, (0, 0, 0), (255, 255, 255, 230))
             cd_text = unit.cooldown if unit.combat_type == CombatType.DAMAGE \
                 else unit.energy
-            cd_font = pygame.font.SysFont("Monospace",
-                                          int(radius) // 2) \
+            cd_font = self._get_font(int(radius) // 2) \
                 .render(f"{cd_text:.02f}", True, (0, 0, 0),
                         (255, 255, 255, 230))
             canvas.blit(font, font.get_rect(center=center))

@@ -58,6 +58,9 @@ class Unit(object):
         self.plane = unit_type.stats.plane
         self.hit = False
         self.valid_targets = unit_type.stats.valid_targets
+        # Physical damage attribution, independent of the legacy faction reward.
+        self.hp_damage_dealt = 0.0
+        self.shield_damage_dealt = 0.0
 
     def clean_up_target(self):
         self.hit = False
@@ -127,7 +130,11 @@ class Unit(object):
             for attribute, amount in self.bonuses.items():
                 if attribute in target.attributes:
                     damage += amount
-        return sum(target.take_damage(damage) for _ in range(self.attacks))
+        hp_before, shield_before = target.hp, target.shield
+        reward = sum(target.take_damage(damage) for _ in range(self.attacks))
+        self.hp_damage_dealt += hp_before - target.hp
+        self.shield_damage_dealt += shield_before - target.shield
+        return reward
 
     def take_damage(self, amount) -> float:
         self.hit = True

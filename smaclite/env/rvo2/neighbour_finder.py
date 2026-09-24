@@ -20,10 +20,10 @@ class NeighbourFinder:
         self.update()
 
     def update(self):
-        if not self.all_units:
-            return
         self.lists = defaultdict(list)
         self.kd_trees = {}
+        if not self.all_units:
+            return
         for unit in self.all_units.values():
             self.lists[unit.plane].append(unit)
         for plane, units in self.lists.items():
